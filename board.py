@@ -15,10 +15,16 @@ class Board:
         # Track whether game is over
         self.max_turns = (size[0] * (size[1] + 1)) + ((size[0] + 1) * size[1])
         self.turn_num = 0
-        self.point_matrix = np.full((size[0]+1,size[1]+1), None)
+        #self.point_matrix = np.full((size[0]+1,size[1]+1), None)
 
         if borders: self.set_borders()
         self.legal_moves = self.init_legal_moves()
+
+        # Vars to save state for reverting
+        self.prev_scores = []
+        self.prev_turns = []
+        self.prev_turn_nums = []
+        self.prev_moves = []
 
     def set_borders(self):
         self.board[0,:,self.UP] = 1 
@@ -32,17 +38,18 @@ class Board:
         return set(((x,y), side) for x,y,side in zip(*legal_moves))
 
     def move(self, pos, side):
-       # print(f'[{self.turn}]Move: {pos} {"UP" if side == self.UP else "LEFT"}')
-        if(self.turn_num % 1000 == 0): print(str(self.turn_num))
+        print(f'[{self.turn}] Move: {pos} {"UP" if side == self.UP else "LEFT"}')
+        if(self.turn_num % 10000 == 0): print(str(self.turn_num))
         if (pos, side) in self.legal_moves:
+            self.save_cur_state((pos, side))
             self.legal_moves.remove((pos,side))
             self.board[pos][side] = 1
             points_gained = self.get_points_gained(pos, side)
             for p in points_gained: 
                 self.score[self.turn] += 1
-                self.point_matrix[p] = self.turn
+       #         self.point_matrix[p] = self.turn
             if(len(points_gained) == 0):
-                self.turn = (self.turn + 1) % self.num_players
+                self.next_turn()
             self.turn_num += 1
             self.check_game_over()
             return True
@@ -50,6 +57,28 @@ class Board:
             print('ILLEGAL MOVE PLAYED!')
             return False
     
+    def save_cur_state(self, move):
+        self.prev_scores.append(self.score.copy())
+        self.prev_turns.append(self.turn)
+        self.prev_turn_nums.append(self.turn_num)
+        self.prev_moves.append(move)
+
+    def revert(self):
+        #print('REVERTING')
+        self.score = self.prev_scores.pop()
+        self.turn = self.prev_turns.pop()
+        self.turn_num = self.prev_turn_nums.pop()
+        pos, side = self.prev_moves.pop()
+        self.legal_moves.add((pos, side))
+        self.board[pos][side] = 0
+        
+    def revert_and_plot(self):
+        self.revert()
+        self.plot_board()
+
+    def next_turn(self):
+        self.turn = (self.turn + 1) % self.num_players
+
     def check_game_over(self):
         if (self.turn_num >= self.max_turns):
             print(f'Game Over.')
@@ -83,12 +112,12 @@ class Board:
 
     def plot_board(self):
         print(f'Turn: {self.turn} ({self.turn_num}/{self.max_turns})')
-        print(f'Points: {self.points}')
+        print(f'Points: {self.score}')
         for x in range(self.size[0] + 1):
             up_row = ''
             left_row = ''
             for y in range(self.size[1] + 1):
-                occupied = self.point_matrix[x,y] if self.point_matrix[x,y] is not None else ' '
+                occupied = ' '#self.point_matrix[x,y] if self.point_matrix[x,y] is not None else ' '
                 up_row += f'. {"_" if self.board[(x,y,self.UP)] else " "} '
                 left_row += f'{"|" if self.board[(x,y,self.LEFT)] else " "} {occupied} '
             print(up_row[:-2])
