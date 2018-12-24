@@ -15,7 +15,7 @@ class Board:
         # Track whether game is over
         self.max_turns = (size[0] * (size[1] + 1)) + ((size[0] + 1) * size[1])
         self.turn_num = 0
-        #self.point_matrix = np.full((size[0]+1,size[1]+1), None)
+        self.point_matrix = np.full((size[0]+1,size[1]+1), None)
 
         if borders: self.set_borders()
         self.legal_moves = self.init_legal_moves()
@@ -35,19 +35,30 @@ class Board:
 
     def init_legal_moves(self):
         legal_moves = np.where(self.board == 0)
-        return set(((x,y), side) for x,y,side in zip(*legal_moves))
+        return set((x,y,side) for x,y,side in zip(*legal_moves))
 
-    def move(self, pos, side):
-        print(f'[{self.turn}] Move: {pos} {"UP" if side == self.UP else "LEFT"}')
-        if(self.turn_num % 10000 == 0): print(str(self.turn_num))
-        if (pos, side) in self.legal_moves:
-            self.save_cur_state((pos, side))
-            self.legal_moves.remove((pos,side))
-            self.board[pos][side] = 1
-            points_gained = self.get_points_gained(pos, side)
+    def move_dirty(self, move):
+        self.save_cur_state(move)
+        self.legal_moves.remove(move)
+        self.board[move] = 1
+        points_gained = self.get_points_gained(move)
+        for _ in points_gained: 
+            self.score[self.turn] += 1
+        if(len(points_gained) == 0):
+            self.next_turn()
+        self.turn_num += 1
+        return True
+
+    def move_verbose(self, move):
+        print(f'[{self.turn}] Move: {(move[0], move[1])} {"UP" if move[2] == self.UP else "LEFT"}')
+        if move in self.legal_moves:
+            self.save_cur_state(move)
+            self.legal_moves.remove(move)
+            self.board[move] = 1
+            points_gained = self.get_points_gained(move)
             for p in points_gained: 
                 self.score[self.turn] += 1
-       #         self.point_matrix[p] = self.turn
+                self.point_matrix[p] = self.turn
             if(len(points_gained) == 0):
                 self.next_turn()
             self.turn_num += 1
@@ -56,7 +67,7 @@ class Board:
         else:
             print('ILLEGAL MOVE PLAYED!')
             return False
-    
+
     def save_cur_state(self, move):
         self.prev_scores.append(self.score.copy())
         self.prev_turns.append(self.turn)
@@ -68,9 +79,9 @@ class Board:
         self.score = self.prev_scores.pop()
         self.turn = self.prev_turns.pop()
         self.turn_num = self.prev_turn_nums.pop()
-        pos, side = self.prev_moves.pop()
-        self.legal_moves.add((pos, side))
-        self.board[pos][side] = 0
+        move = self.prev_moves.pop()
+        self.legal_moves.add(move)
+        self.board[move] = 0
         
     def revert_and_plot(self):
         self.revert()
@@ -81,33 +92,39 @@ class Board:
 
     def check_game_over(self):
         if (self.turn_num >= self.max_turns):
-            print(f'Game Over.')
-            print(f'Score: {self.score}')
-            print(f'Winner(s): {[i for i in range(self.num_players) if self.score[i] >= max(self.score)]}')
+            # print(f'Game Over.')
+            # print(f'Score: {self.score}')
+            # print(f'Winner(s): {[i for i in range(self.num_players) if self.score[i] >= max(self.score)]}')
+            return True
+        else:
+            return False
 
 
-    def get_points_gained(self, pos, side):
+    def get_points_gained(self, move):
+        pos_x, pos_y, _ = move
+        pos = (pos_x, pos_y)
         result = set()
         if self.check_box_complete(pos):
             result.add(pos)
-        neighbour = self.get_neighbour(pos, side)
+        neighbour = self.get_neighbour(move)
         if self.check_box_complete(neighbour):
             result.add(neighbour)
         return result
 
-    def get_neighbour(self, pos, side):
+    def get_neighbour(self, move):
+        pos_x, pos_y, side = move
         if side == self.UP:
-            return (pos[0] - 1, pos[1])
+            return (pos_x - 1, pos_y)
         else:
-            return (pos[0], pos[1] - 1)
+            return (pos_x, pos_y - 1)
 
     def check_box_complete(self, pos):
         return np.all(self.board[pos]) and \
            self.board[pos[0], pos[1] + 1, self.LEFT] and \
            self.board[pos[0] + 1, pos[1], self.UP]
 
-    def move_and_plot(self, pos, side):
-        self.move(pos, side)
+    def move_and_plot(self, move):
+        self.move_verbose(move)
         self.plot_board()
 
     def plot_board(self):
@@ -117,7 +134,7 @@ class Board:
             up_row = ''
             left_row = ''
             for y in range(self.size[1] + 1):
-                occupied = ' '#self.point_matrix[x,y] if self.point_matrix[x,y] is not None else ' '
+                occupied = self.point_matrix[x,y] if self.point_matrix[x,y] is not None else ' '
                 up_row += f'. {"_" if self.board[(x,y,self.UP)] else " "} '
                 left_row += f'{"|" if self.board[(x,y,self.LEFT)] else " "} {occupied} '
             print(up_row[:-2])
