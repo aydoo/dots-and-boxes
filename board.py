@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-class Board_2:
+class Board:
     UP = 1
     LEFT = 0
     

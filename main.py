@@ -1,7 +1,6 @@
 import time
 import numpy as np
 from board import Board
-from board_2 import Board_2
 from ai import alpha_beta
 import random
 
@@ -19,9 +18,9 @@ profile.enable()
 # print(board_2.legal_moves)
 # print(len(board_2.legal_moves))
 for i in range(1):
-    size=(6,6)
-    board_ai = Board_2(size=size)
-    board_play = Board_2(size=size)
+    size=(5,5)
+    board_ai = Board(size=size)
+    board_play = Board(size=size)
 
     # Random first 4 moves
     for i in range(4):
@@ -39,4 +38,4 @@ for i in range(1):
         board_play.move_and_plot(move)
 
 profile.disable()
-profile.print_stats(sort='cumtime')
+#profile.print_stats(sort='cumtime')
