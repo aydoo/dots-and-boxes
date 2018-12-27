@@ -1,41 +1,86 @@
 import time
 import numpy as np
 from board import Board
-from ai import alpha_beta
+from alpha_beta import alpha_beta
+from convnet import ConvNet
 import random
+# import cProfile
+# profile = cProfile.Profile()
+# profile.enable()
 
-import cProfile
+def generate_games(path, num = 1, size=(5,5), alpha_beta_max_depth = 4):
+    logs=[]
+    for i in range(num):
+        print(i)
+        log_move = []
+        # log_turn = []
+        board = Board(size=size)
 
-profile = cProfile.Profile()
-profile.enable()
+        # Random first 4 moves
+        for i in range(6):
+            random_move = random.choice(list(board.legal_moves))
+            log_move.append(random_move)
+            # log_turn.append(log_turn)
+            board.move_dirty(random_move)
 
-# board_2 = Board_2(size=(3,3), borders = 1)
-# # board_2.move_and_plot((1,0))
-# # board_2.move_and_plot((0,1))
-# board_2.move_and_plot((2,1))
-# board_2.move_and_plot((1,2))
+        while(not board.check_game_over()):
+            move = alpha_beta(board, board.turn, alpha_beta_max_depth)
+            log_move.append(move)
+            # log_turn.append(board.turn)
+            board.move_dirty(move)
+        
+        logs.append(log_move)
+        # logs.append(log_turn)
+        logs.append(list(board.score.values()))
 
-# print(board_2.legal_moves)
-# print(len(board_2.legal_moves))
-for i in range(1):
-    size=(5,5)
-    board_ai = Board(size=size)
-    board_play = Board(size=size)
+    f = open(path, 'a')
+    for i in logs:
+        f.write(str(i)[1:-1]+'\n')
+    f.close()
 
-    # Random first 4 moves
-    for i in range(4):
-        random_move = random.choice(list(board_play.legal_moves))
-        board_ai.move_and_plot(random_move)
-        board_play.move_and_plot(random_move)
+def load_games(path, size):
+    f = open(path, 'r')
+    lines = f.readlines()
+    f.close()
+    game_moves = lines[0::2][:100]
+    game_results = lines[1::2][:100]
 
-    while(not board_ai.check_game_over()):
-        if(board_ai.turn == 1):
-            move = alpha_beta(board_ai, 1, 4)
-            # move = random.choice(list(board.legal_moves))#eval(input())
-        else:
-            move = alpha_beta(board_ai, -1, 4)
-        board_ai.move_dirty(move)
-        board_play.move_and_plot(move)
+    X = {}
+    X['board'] = []
+    X['turn'] = []
+    y = []
+    print(f'Loading {len(game_moves)} games...')
+    for g in range(len(game_moves)):
+        board = Board(size, borders=True)
+        for m in eval(game_moves[g]):
+            board.move_dirty(m)
+            X['board'].append(board.board.copy())
+            X['turn'].append(board.turn)
+            y.append(np.matrix(eval(game_results[g])) // max(eval(game_results[g])))
+    print('Done.')
+    X['board'] = np.array(X['board'])
+    shape = X['board'].shape
+    X['board'] = X['board'].reshape((shape[0],shape[1],shape[2],1))
+    X['turn'] = np.array(X['turn'])
+    y = np.array(y)
+    y = y.reshape((y.shape[0], y.shape[2]))
+    return X, y
 
-profile.disable()
-#profile.print_stats(sort='cumtime')
+##########################################################
+##########################################################
+##########################################################
+
+size = (5,5)
+path = rf'games/games_{size[0]}x{size[1]}.txt'
+num = 1000
+depth = 4
+
+#generate_games(path, num, size, depth)
+
+X, y = load_games(path, size)
+
+net = ConvNet((size[0]*2+1,size[1]*2+1))
+
+hist = net.train(X,y, batch_size=40)
+
+print(hist)

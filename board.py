@@ -58,7 +58,7 @@ class Board:
         self.turn_num += 1
         return True
 
-    def move_verbose(self, move):
+    def move(self, move):
         print(f'[{self.turn}] Move: {move}')
         if move in self.legal_moves:
             self.save_cur_state(move)
@@ -93,7 +93,7 @@ class Board:
         
     def revert_and_plot(self):
         self.revert()
-        self.plot_board()
+        self.print_board()
 
     def next_turn(self):
         self.turn = -self.turn
@@ -122,10 +122,10 @@ class Board:
         except: return False
 
     def move_and_plot(self, move):
-        self.move_verbose(move)
-        self.plot_board()
+        self.move(move)
+        self.print_board()
 
-    def plot_board(self):
+    def print_board(self):
         print(f'Turn: {self.turn} ({self.turn_num}/{self.max_turns})')
         print(f'Points: {self.score}')
         for x in range(0, self.size[0]*2, 2):

@@ -5,14 +5,14 @@ def alpha_beta(_board, player, _max_depth):
     global saved_move, board, max_depth, counter
     saved_move, board, max_depth, counter = None, _board, _max_depth, 0
     alpha_beta_helper(player, max_depth, -10000, 10000)
-    print(f'Moves evaluated: {counter}')
+    #print(f'Moves evaluated: {counter}')
     return saved_move
 
 def alpha_beta_helper(player, depth, alpha, beta):
     global counter
-    counter += 1
     #if counter % 1000 == 0: print(counter)
     if depth == 0 or board.check_game_over():
+        counter += 1
         return value(player)
     max_val = alpha
     moves = board.legal_moves.copy()
