@@ -4,7 +4,7 @@ An implementation of the game 'Dots and Boxes' with a alpha-beta / convnet based
 
 ## Structure
 
-The board WxH sized board is represented by a (Wx2+1)x(Hx2+1) matrix.
+The W\*H sized board is represented by a (W\*2+1)\*(H\*2+1) matrix.
 
 ```
 . _ . _ . _ . _ .
@@ -18,7 +18,7 @@ The board WxH sized board is represented by a (Wx2+1)x(Hx2+1) matrix.
 . _ . _ . _ . _ .
 ```
 
-A move is described as a tuple (x,y), which describes the coordinate of the 'line' which will be drawn.
+A move is encoded as a tuple `(x,y)`, which describes the coordinate of the *line* which will be drawn.
 
 ## How to use
 
@@ -28,3 +28,7 @@ A move is described as a tuple (x,y), which describes the coordinate of the 'lin
 `Board.print_board_board()` - Prints board in stdout.\
 `Board.dirty_move(m)` - Executes move `m` without checking for validity. (Reduces execution time and is mainly used by the AI.)\
 `ai.alpha_beta(board, player, max_depth)` - Minimax algorithm with alpha-beta pruning to calculate a move for a specific `board`, `player` and `max_depth`.\
+
+## TODOs
+
+- [ ] Embed convnet evaluation of board as value function into alpha beta pruning
