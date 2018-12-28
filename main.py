@@ -1,13 +1,13 @@
 import time
 import numpy as np
 from board import Board
-from alpha_beta import alpha_beta
+import alpha_beta as ab
 from convnet import ConvNet
 import random
 from keras.models import load_model
-# import cProfile
-# profile = cProfile.Profile()
-# profile.enable()
+import cProfile
+profile = cProfile.Profile()
+profile.enable()
 
 def generate_games(path, num = 1, size=(5,5), alpha_beta_max_depth = 4):
     logs=[]
@@ -25,7 +25,7 @@ def generate_games(path, num = 1, size=(5,5), alpha_beta_max_depth = 4):
             board.move_dirty(random_move)
 
         while(not board.check_game_over()):
-            move = alpha_beta(board, board.turn, alpha_beta_max_depth)
+            move = ab.alpha_beta(ab.value_simple, board, board.turn, alpha_beta_max_depth, None)
             log_move.append(move)
             # log_turn.append(board.turn)
             board.move_dirty(move)
@@ -72,9 +72,9 @@ def load_games(path, size):
 ##########################################################
 
 size = (5,5)
-path = rf'games/games_{size[0]}x{size[1]}.txt'
-num = 1000
-depth = 3
+# path = rf'games/games_{size[0]}x{size[1]}.txt'
+# num = 1000
+depth = 4
 
 #generate_games(path, num, size, depth)
 
@@ -82,14 +82,14 @@ depth = 3
 
 # net = ConvNet((size[0]*2+1,size[1]*2+1))
 # hist = net.train(X,y, batch_size=40)
-net = load_model(r'models/model_5x5.h5')
+net = ConvNet(model=load_model(r'models/model_5x5.h5'))
 
 #y_pred = net.predict([X['board'],X['turn']])
 # for i in range(len(y)):
 #     print(f'{y[i]} --- {y_pred[i]}')
 
-for i in range(10):
-    print(i)
+for i in range(100):
+    #print(i)
     board = Board(size=size)
 
     # Random first 4 moves
@@ -97,9 +97,14 @@ for i in range(10):
         random_move = random.choice(list(board.legal_moves))
         board.move_dirty(random_move)
 
-    while(not board.check_game_over()):
-        move = alpha_beta(board, board.turn, depth)
+    while not board.check_game_over():
+        if board.turn == 1:
+            move = ab.alpha_beta(ab.value_simple, board, board.turn, 4)
+        else:
+            move = ab.alpha_beta(ab.value_simple, board, board.turn, 4)        
         board.move_dirty(move)
-        prediction = net.predict([board.board.reshape((1,11,11,1)), np.array(board.turn).reshape(1,1)])
-        print(np.round(prediction, 2))
+        #print(np.round(net.predict(board), 2))
     board.print_board()
+
+# profile.disable()
+# profile.print_stats(sort='cumtime')

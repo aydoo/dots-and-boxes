@@ -90,7 +90,12 @@ class Board:
         move = self.prev_moves.pop()
         self.legal_moves.add(move)
         self.board[move] = 0
-        
+        if self.move_type_lookup[move] == 'H':
+            self.board[(move[0]-1,move[1])] = 0
+            self.board[(move[0]+1,move[1])] = 0
+        else:
+            self.board[(move[0],move[1]-1)] = 0
+            self.board[(move[0],move[1]+1)] = 0
     def revert_and_plot(self):
         self.revert()
         self.print_board()
@@ -100,6 +105,10 @@ class Board:
 
     def check_game_over(self):
         return self.turn_num >= self.max_turns
+
+    def winners(self):
+        if self.check_game_over():
+            return [i for i in self.score.keys() if self.score[i] >= max(self.score.values())]
 
     def get_points_gained(self, move):
         r = set()
@@ -116,9 +125,6 @@ class Board:
                     self.board[pos[0]+1,pos[1]] and \
                     self.board[pos[0],pos[1]-1] and \
                     self.board[pos[0],pos[1]+1]
-        # try: return self.board[
-        #         np.array([pos[0]-1,pos[0]+1,pos[0],pos[0]]), 
-        #         np.array([pos[1],pos[1],pos[1]-1,pos[1]+1])].all()
         except: return False
 
     def move_and_plot(self, move):
@@ -142,5 +148,5 @@ class Board:
         if self.check_game_over():
             print(f'Game Over.')
             print(f'Score: {self.score}')
-            print(f'Winner(s): {[i for i in self.score.keys() if self.score[i] >= max(self.score.values())]}')
+            print(f'Winner(s): {self.winners()}')
 

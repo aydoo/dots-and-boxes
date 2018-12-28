@@ -1,3 +1,4 @@
+import numpy as np
 from keras.models import Model
 from keras.layers import Conv2D, Input, LeakyReLU, MaxPool2D, \
                          Dropout, BatchNormalization, Dense, \
@@ -5,8 +6,11 @@ from keras.layers import Conv2D, Input, LeakyReLU, MaxPool2D, \
 
 class ConvNet:
 
-    def __init__(self, input_shape):
-        self.model = self.create_model(input_shape)
+    def __init__(self, input_shape=(11,11), model=None):
+        if model is not None:
+            self.model = model
+        else:
+            self.model = self.create_model(input_shape)
 
     def create_model(self, input_shape):
         board_in = Input((input_shape[0], input_shape[1], 1))
@@ -42,5 +46,5 @@ class ConvNet:
     def train(self, X, y, batch_size, epochs = 100, validation_split = 0.3):
         return self.model.fit([X['board'], X['turn']], y, batch_size=batch_size, epochs=epochs, validation_split=validation_split)
 
-    def predict(self, X):
-        return self.model.predict(X)
+    def predict_single(self, board):
+        return self.model.predict([board.board.reshape((1,11,11,1)), np.array(board.turn).reshape(1,1)])
