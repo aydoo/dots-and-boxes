@@ -4,7 +4,7 @@ An implementation of the game 'Dots and Boxes' with a alpha-beta / convnet based
 
 ## Structure
 
-The board W*H sized board is represented by a (W*2+1)*(H*2+1) matrix.
+The board WxH sized board is represented by a (Wx2+1)x(Hx2+1) matrix.
 
 ```
 . _ . _ . _ . _ .

@@ -4,6 +4,7 @@ from board import Board
 from alpha_beta import alpha_beta
 from convnet import ConvNet
 import random
+from keras.models import load_model
 # import cProfile
 # profile = cProfile.Profile()
 # profile.enable()
@@ -73,14 +74,32 @@ def load_games(path, size):
 size = (5,5)
 path = rf'games/games_{size[0]}x{size[1]}.txt'
 num = 1000
-depth = 4
+depth = 3
 
 #generate_games(path, num, size, depth)
 
-X, y = load_games(path, size)
+#X, y = load_games(path, size)
 
-net = ConvNet((size[0]*2+1,size[1]*2+1))
+# net = ConvNet((size[0]*2+1,size[1]*2+1))
+# hist = net.train(X,y, batch_size=40)
+net = load_model(r'models/model_5x5.h5')
 
-hist = net.train(X,y, batch_size=40)
+#y_pred = net.predict([X['board'],X['turn']])
+# for i in range(len(y)):
+#     print(f'{y[i]} --- {y_pred[i]}')
 
-print(hist)
+for i in range(10):
+    print(i)
+    board = Board(size=size)
+
+    # Random first 4 moves
+    for i in range(4):
+        random_move = random.choice(list(board.legal_moves))
+        board.move_dirty(random_move)
+
+    while(not board.check_game_over()):
+        move = alpha_beta(board, board.turn, depth)
+        board.move_dirty(move)
+        prediction = net.predict([board.board.reshape((1,11,11,1)), np.array(board.turn).reshape(1,1)])
+        print(np.round(prediction, 2))
+    board.print_board()
